@@ -1,0 +1,48 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to roll back'
+        required: true
+        type: choice
+        options: [dev, staging, production]
+      target_version:
+        description: 'Lambda function version number to roll back to (e.g. 12)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    name: Rollback ${{ inputs.environment }} to version ${{ inputs.target_version }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Repoint 'live' alias to target version
+        run: |
+          FUNCTION_NAME="lambda-cicd-demo-${{ inputs.environment }}"
+          aws lambda update-alias \
+            --function-name "${FUNCTION_NAME}" \
+            --name live \
+            --function-version "${{ inputs.target_version }}"
+
+      - name: Smoke test rolled-back version
+        run: |
+          FUNCTION_NAME="lambda-cicd-demo-${{ inputs.environment }}"
+          FUNCTION_URL=$(aws lambda get-function-url-config \
+            --function-name "${FUNCTION_NAME}" --qualifier live \
+            --query FunctionUrl --output text)
+          FUNCTION_URL="${FUNCTION_URL}" ./scripts/smoke-test.sh

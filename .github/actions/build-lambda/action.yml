@@ -1,0 +1,39 @@
+name: 'Build Lambda'
+description: 'Builds the Go Lambda binary and packages it into a zip artifact'
+
+inputs:
+  go-version:
+    description: 'Go version to use'
+    required: false
+    default: '1.22'
+  goarch:
+    description: 'Target architecture (arm64 or amd64)'
+    required: false
+    default: 'arm64'
+
+outputs:
+  artifact-path:
+    description: 'Path to the built lambda.zip'
+    value: ${{ steps.build.outputs.artifact-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: true
+
+    - name: Run tests
+      shell: bash
+      run: go test ./... -v
+
+    - name: Build and package
+      id: build
+      shell: bash
+      env:
+        GOARCH: ${{ inputs.goarch }}
+      run: |
+        ./scripts/build.sh
+        echo "artifact-path=dist/lambda.zip" >> "$GITHUB_OUTPUT"

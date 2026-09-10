@@ -1,0 +1,64 @@
+name: Promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_environment:
+        description: 'Environment to promote from'
+        required: true
+        type: choice
+        options: [dev, staging]
+      to_environment:
+        description: 'Environment to promote to'
+        required: true
+        type: choice
+        options: [staging, production]
+      version:
+        description: 'Version (git SHA) currently running in from_environment'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate source environment is healthy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard invalid promotion path
+        run: |
+          if [[ "${{ inputs.from_environment }}" == "dev" && "${{ inputs.to_environment }}" == "production" ]]; then
+            echo "Cannot promote directly from dev to production; go through staging." >&2
+            exit 1
+          fi
+
+  promote:
+    name: Promote artifact to ${{ inputs.to_environment }}
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-download build artifact for version
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-${{ inputs.version }}
+          path: dist
+
+      - name: Re-upload for target environment deploy
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-${{ inputs.version }}
+          path: dist/lambda.zip
+          overwrite: true
+
+  deploy:
+    name: Deploy promoted artifact
+    needs: promote
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: ${{ inputs.to_environment }}
+      artifact_name: lambda-${{ inputs.version }}
+      version: ${{ inputs.version }}
+    secrets: inherit

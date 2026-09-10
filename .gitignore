@@ -1,0 +1,8 @@
+dist/
+*.zip
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+.DS_Store
