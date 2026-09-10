@@ -50,7 +50,7 @@ jobs:
       - name: Upload artifact to S3
         run: |
           aws s3 cp dist/lambda.zip \
-            "s3://${{ vars.ARTIFACT_S3_BUCKET }}/lambda-cicd-demo/${{ github.sha }}/lambda.zip"
+            "s3://${{ vars.ARTIFACT_S3_BUCKET || 'demo-github-action-artifacts-bucket' }}/lambda-cicd-demo/${{ github.sha }}/lambda.zip"
 
   trigger-dev-deploy:
     name: Trigger Dev Deploy

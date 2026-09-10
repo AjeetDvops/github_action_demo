@@ -52,7 +52,7 @@ terraform apply -var="artifact_path=../../../dist/lambda.zip" -var="app_version=
 ## Required repository configuration
 
 - Secrets (set per GitHub Environment — `dev`, `staging`, `production`): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
-- Variables: `AWS_REGION` (optional, defaults to `us-east-1`), `ARTIFACT_S3_BUCKET` (bucket the build artifact is uploaded to)
+- Variables: `AWS_REGION` (optional, defaults to `us-east-1`), `ARTIFACT_S3_BUCKET` (optional, defaults to `demo-github-action-artifacts-bucket`)
 - GitHub Environments: `dev`, `staging`, `production` — use required reviewers on `staging`/`production` for manual approval gates
 
 > Static access keys are simpler to demo but are long-lived credentials. Rotate them regularly and scope the
