@@ -3,6 +3,13 @@ name: Build & Publish
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_dev_deploy:
+        description: 'Skip triggering the automatic dev deploy (useful for manual test runs)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -48,6 +55,7 @@ jobs:
   trigger-dev-deploy:
     name: Trigger Dev Deploy
     needs: build
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.skip_dev_deploy != true }}
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch deploy workflow
