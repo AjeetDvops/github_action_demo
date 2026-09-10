@@ -48,9 +48,12 @@ jobs:
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
       - name: Upload artifact to S3
+        env:
+          ARTIFACT_S3_BUCKET: ${{ vars.ARTIFACT_S3_BUCKET || 'demo-github-action-artifacts-bucket' }}
         run: |
+          bucket="$(echo -n "${ARTIFACT_S3_BUCKET}" | xargs)"
           aws s3 cp dist/lambda.zip \
-            "s3://${{ vars.ARTIFACT_S3_BUCKET || 'demo-github-action-artifacts-bucket' }}/lambda-cicd-demo/${{ github.sha }}/lambda.zip"
+            "s3://${bucket}/lambda-cicd-demo/${{ github.sha }}/lambda.zip"
 
   trigger-dev-deploy:
     name: Trigger Dev Deploy
